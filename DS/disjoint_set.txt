@@ -1,0 +1,114 @@
+Disjoint sets -> 
+
+Following operations supported : 
+
+1. Makeset(x) creates a singleton {x}.
+2. Find(x) returns the ID of the set X belongs to, i.e. if x and y belong to the same set, Find(x) = Find(y).
+3. Union(x,y) merges the sets x and y belong to into one. After union, Find(x) = Find(y).
+
+Maze problem : 
+___________________________________________________________________________________________________
+Preprocess(Maze)
+	For each cell c in Maze
+		Makeset(c)
+	For each cell c in Maze
+		For each neighbour n of c
+			Union(c,n)
+___________________________________________________________________________________________________
+Isreachable(A,B)
+	return Find(A) == Find(B)
+___________________________________________________________________________________________________
+
+
+Naive Implementations:
+
+1. Array Implementation: Use the smallest element of the set as the ID of that set.
+___________________________________________________________________________________________________
+   Makeset(i)
+	smallest[i] = i;
+___________________________________________________________________________________________________
+   Find(i)
+	return smallest[i].
+___________________________________________________________________________________________________
+Both makeset and Find => O(1)
+
+___________________________________________________________________________________________________
+   Union(i,j)
+	x = Find(i)
+	y = Find(j)
+	if(x == y)
+	     return
+	m = min(x,y)
+	for (k from 1 to n)
+		if(Find(k) == x or Find(k) == y)
+			Smallest[k] = m
+___________________________________________________________________________________________________
+
+Union unfortunately takes O(n) and we thus need some optimization.
+
+
+2. Linked list implementation: Chain all the elements of a set together in one list. Let the tail of the linked list be the ID of the set.
+    
+   When it comes to merging, merge the tail of the list that one of the elements belongs to with the head of the list that the other element belongs to.
+
+   Pros of this implementation is that we have a clear ID for each set - the tail and merge works in O(1) provided we have both tail and head pointers for the two lists that the elements being merged belong to.
+
+   Con is that Find of an elements is going to take O(n) time as we have to go through all of the lists and then find the tail of the list that the elements belongs to.
+
+
+3.  Next implementation is a modification of the linked list approach where the tail of one list being merged is linked to the tail of the other list being merged. This way it is a tree based approach rather than a linked list approach
+
+    In this tree based approach we represent each set as a tree with the elements of the set represented as nodes in the tree. The ID of the set is the root of the tree.
+
+___________________________________________________________________________________________________
+
+   makeset(i)
+	parent[i] = i;
+___________________________________________________________________________________________________
+
+   find(i)
+	while(parent[i] != i)
+	    i = parent[i];
+	return i;
+___________________________________________________________________________________________________
+
+
+Merging two sets involves hanging one tree below another. And here we will hang the tree with shorter height onto the tree with longer height because we want to keep the tree shallow.
+
+Union by rank Heuristic :
+	When merging two trees as discussed the tree with the shorter height is hung below the tree with the longer height. To quickly find the height of a tree we will keep track of rank in an array called rank[1....n] where rank[i] is the height of the subtree rooted at i.
+	
+___________________________________________________________________________________________________
+
+   makeset(i)
+	parent[i] = i;
+	rank[i] = 0;
+___________________________________________________________________________________________________
+
+    union(i,j)
+	a = Find(i)
+	b = Find(j)
+	if (a==b)
+	   return
+	if (rank[a] > rank[b])
+	   parent[b] = a;
+	else
+	   parent[a] = b;
+	if (rank[a] == rank[b])
+	   rank[b]++;
+___________________________________________________________________________________________________
+
+The height of any tree implementation of a disjointed set is at most logn because any tree of height k has at least 2^k nodes because the way we've implemented union each level other than the first will have at least 2 nodes.
+
+So the running time of union when implemented using this tree approach is O(log n).
+
+We can bring this down further by an optimization method called Path compression. The idea here is that when we are calling find for a node it traverses some path to reach the root, and we are basically not making use of the information that all nodes along that path also have their find() as the root. To do this we make a small change in our find pseudocode.
+
+___________________________________________________________________________________________________
+
+     find(i)
+	if(parent[i]!=i)
+	   parent[i] = find(parent[i])
+	return parent[i]
+___________________________________________________________________________________________________    	
+

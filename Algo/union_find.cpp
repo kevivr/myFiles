@@ -36,3 +36,20 @@ public:
 		// make smaller root point to larger one
         if   (sz[i] < sz[j])	{ 
 		id[i] = j; 
+		sz[j] += sz[i]; 
+	} else	{ 
+		id[j] = i; 
+		sz[i] += sz[j]; 
+	}
+        cnt--;
+    }
+	// Are objects x and y in the same set?
+    bool connected(int x, int y)    {
+        return find(x) == find(y);
+    }
+	// Return the number of disjoint sets.
+    int count() {
+        return cnt;
+    }
+};
+

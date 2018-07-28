@@ -1,0 +1,17 @@
+int m;
+vector <pair <int, pair <int,int> >> g; / / weight - the top one - the top 2
+... Reading the graph ...
+int cost = 0;
+vector <pair <int,int>> res;
+sort (g.begin (), g.end ());
+p.resize (n);
+for (int i = 0; i <n; + + i)
+	p [i] = i;
+for (int i = 0; i <m; + + i) {
+	int a = g [i]. second.first, b = g [i]. second.second, l = g [i]. first;
+	if (dsu_get (a)! = dsu_get (b)) {
+		cost + = l;
+		res.push_back (g [i]. second);
+		dsu_unite (a, b);
+	}
+}

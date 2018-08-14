@@ -1,0 +1,171 @@
+One example where hash table is used - Access logs for web servers to prevent say Denial of service attacks from some system or in general to just monitor requests. Should be able to answer questions like did anybody access the server anytime last hour ? How many IP's accessed the server in the last hour ? How many times an IP accessed the server during the last hour etc ..
+
+1 hour of logs can contain millions of records. Too slow to process that for each querry
+
+Keep  count : how many times each IP appears in the last hour
+
+C is some data structure that stores mappings of IP's to their counts
+
+Let :
+
+log - array of log lines (time,IP)
+
+C - mapping from IPs to counters
+
+i - first unprocessed log line
+
+j - first line in current 1hour window
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+i = 0
+j = 0
+c = {NULL}
+Each second
+	UpdateAccessList(log,i,j,C)
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+UpdateAccessList(log,i,j,c)
+	while log[i].time <= now()
+		C[log[i].IP] = C[log[i].IP] + 1
+		i = i+1
+	while log[j].time <= now()-3600
+		C[log[j].IP] = C[log[j].IP] - 1
+		j = j+1
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+AccessedLastHour(IP,C)
+	if(C[IP] > 0)
+		return true
+	return false
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+DIRECT ADDRESSING :- 
+
+The concept here is that we cover all possible scenarios in our universe. For the above web server example, we have an entry in our array say A for each possible IP which is basically an array of size 2^32.
+
+We can basically say convert IP to its corresponding integer.
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+IPInt(IP)
+	return IP[1].2^24+IP[2].2^16+IP[3].2^8+IP[4].
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+UpdateAccessList(log,i,j,A)
+	while log[i].time <= now()
+		A[IPInt(log[i].IP)] = A[IPInt(log[i].IP)]+1
+		i = i+1
+	while log[i].time <= now()-3600
+		A[IPInt(log[j].IP)] = A[IPInt(log[j].IP)]-1
+		j = j+1
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+AccessedLastHour(IP,A)
+	if(A[IPInt(IP)] > 0)
+		return true
+	return false
+
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Asymptotics :
+
+Both UpdateAccessList and AccessedLastHour take O(1) time but this  concept needs 2^32 memory which is too large. Also if using IPv6 needs 2^128 memory which is not possible.
+
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+LIST ADDRESSING :-
+
+Because of the pitfalls of the previous Direct addressing method, we try a new method to address the problem namely LIST ADDRESSING. What we do in this is we store only active IP's. We store only the latest occurence of each IP. We push IP's onto the list as and when we encounter them thus keeping the list sorted according to time of encounter.
+
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+UpdateAccessList(log,i,L)
+	while log[i].time <= NOW
+		log_line = L.FindByIP(log[i].IP)
+		if log_line != NULL
+			L.Erase(log_line)
+		L.Append(log[i])
+		i = i+1
+	while L.Top().time <= NOW - 3600
+		L.Pop()
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+AccessedLastHour(IP,L)
+	return L.FindByIP() != NULL
+
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+ 
+Now coming to the asymptotics, if 'n' is the number of all active IP's, then memory complexity is O(n) and while Append, Pop and Top take O(1) time, L.Find() and L.Erase() both take O(n) time which in turn means updateAccessList and AccessedLastHour are also both linear in time. Basically, this approach is no improvement at all over just going through the logs to find if an IP accessed the server meaning we have to do better, but the memory complexity part is taken care of here.
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+The above issues are taken care of by a concept called Chaining. We first hash our elements to get values. The hash values are a small set of say numbers which means there could be collisions i.e., two elements hashing the same value. This problem is taken care of by chaining.  Basically, we have a linked list at each element of an array which is the hash values, on collision, we keep appending to the list corresponding to the hash value.
+
+Map Data structure :Store mappings from one object to another. Supports following functions : HasKey(O), Get(O) and Set(O,v).
+
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+HasKey(O)
+	L = A[H(O)]	//Compute Hash of Object O passed to the function. Check array element corresponding to the hash of the object and retrieve the list corresponding to it.
+	for (O',v') in L
+		if(O == O')
+			return true
+	return false
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Get(O)
+	L = A[H(O)]	//Compute Hash of Object O passed to the function. Check array element corresponding to the hash of the object and retrieve the list corresponding to it.
+	for (O',v') in L
+		if(O == O')
+			return v'
+	return -1
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Set(O,v)
+	L = A[H(O)]
+	for p in L
+		if(p.O == O)
+			p.v = v
+	L.append(O,v)
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Coming to the asymptotics of the above implementation of a Map, time complexity is O(c+1) where c is the length of the longest list in the array A of hashes. Memory consumption is O(n+m) where n is the number of keys in the map and m is the cardinality of the hash.
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Set is a similar data structure with methods Add(O), Remove(O) and Find(O).
+
+Two ways to implement Set :
+	1.Similar to Map with set of Objects mapped to bool true or false.
+	2.Map just objects O instead of pair (O,v).
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Add(O)
+	L = A[H(O)]
+	for O' in L
+		if(O' == O)
+			return
+	L.append(O)
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Remove(O)
+	if not Find(O)
+		return false
+	L = A[H(O)]
+	for O' in L
+		if(O' == O)
+			L.erase(O')
+			return true
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Find(O)
+	L = A[H(O)]
+	for O' in L
+		if(O' == O)
+			return true
+	return false
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Hash Table - An implementation of a set or a map using Hashing is called a hast table and chaining is a technique to implement this.
+______________________________________________________________________________________________________________________________________________________________________________________________________________
+
+
+
+ 	
+
